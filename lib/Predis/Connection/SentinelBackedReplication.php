@@ -12,6 +12,7 @@
 namespace Predis\Connection;
 
 use Predis\Command\CommandInterface;
+use Predis\Command\ServerSentinel;
 use Predis\Replication\ReplicationStrategy;
 
 /**
@@ -20,11 +21,9 @@ use Predis\Replication\ReplicationStrategy;
 class SentinelBackedReplication extends MasterSlaveReplication
 {
     /**
-     * Predis Client used to connect the sentinels.
-     * 
-     * @var \Predis\Client
+     * Sentinel connections definition
      */
-    protected $sentinelClient;
+    protected $sentinelConnections;
 
     /**
      * Name of the master (in sentinel configuration)
@@ -32,17 +31,29 @@ class SentinelBackedReplication extends MasterSlaveReplication
     protected $sentinelMasterName;
 
     /**
-     * @param array|string|ConnectionInterface $sentinelConnection Sentinel connection definition, anything that \Predis\Client accepts as constructor first argument
-     * @param string                           $masterName         Sentinel master name
-     * @param ReplicationStrategy              $strategy           ReplicationStrategy passed to MasterSlaveReplication
+     * The current sentinel connection instance
+     *
+     * @var SingleConnectionInterface
      */
-    public function __construct($sentinelConnection, $masterName, ReplicationStrategy $strategy = null)
+    protected $currentSentinelConnection;
+
+    /**
+     * @var ConnectionFactory
+     */
+    protected $connectionFactory;
+
+    /**
+     * @param array               $sentinelConnections Sentinel connections definition
+     * @param string              $masterName          Sentinel master name
+     * @param ReplicationStrategy $strategy            ReplicationStrategy passed to MasterSlaveReplication
+     */
+    public function __construct(array $sentinelConnections, $masterName, ReplicationStrategy $strategy = null)
     {
         parent::__construct($strategy);
 
-        // Creating connection to Sentinel
-        $this->sentinelClient = new \Predis\Client($sentinelConnection);
+        $this->sentinelConnections = $sentinelConnections;
         $this->sentinelMasterName = $masterName;
+        $this->connectionFactory = new ConnectionFactory();
     }
 
     /**
@@ -58,29 +69,80 @@ class SentinelBackedReplication extends MasterSlaveReplication
     }
 
     /**
-     * This function makes a query to the configured Sentionels and receive the master & slave configuration
+     * Returns the current sentinel connection or builds a new, if none
+     * is currently active.
+     *
+     * @return SingleConnectionInterface
+     */
+    private function getSentinelConnection()
+    {
+        if (null === $this->currentSentinelConnection) {
+            // In case there is no more sentinel connections, we'll throw
+            // an exception
+            if (count($this->sentinelConnections) < 1) {
+                throw new \Predis\ClientException('No working sentinels.');
+            }
+
+            // Otherwise, shifting one connection definition from the stack
+            $connectionDef = array_shift($this->sentinelConnections);
+            $this->currentSentinelConnection = $this->connectionFactory->create($connectionDef);
+        }
+
+        return $this->currentSentinelConnection;
+    }
+    
+    /**
+     * Discards the current sentinel connection
+     */
+    private function discardCurrentSentinel()
+    {
+        trigger_error('Sentinel connection ' . $this->currentSentinelConnection . ' failed, discarding.');
+        $this->currentSentinelConnection = null;
+    }
+    
+    /**
+     * Creates a new ServerSentinel instance with given arguments.
+     */
+    private function createSentinelCommand($arguments = array()) {
+        $command = new ServerSentinel();
+        $command->setArguments($arguments);
+        return $command;
+    }
+
+    /**
+     * This function makes a query to the configured sentinels. The query loops through 
      */
     protected function querySentinels()
     {
-        // Querying sentinels for master configuration
-        $masterResult = $this->sentinelClient->sentinel('get-master-addr-by-name', $this->sentinelMasterName);
-        $masterConnection = new StreamConnection(new ConnectionParameters(array(
-            'host' => $masterResult[0],
-            'port' => $masterResult[1],
-            'alias' => 'master'
-        )));
-        
-        $this->add($masterConnection);
-        
-        // Slave configuration
-        $slavesResult = $this->sentinelClient->sentinel('slaves',$this->sentinelMasterName);
-        foreach ($slavesResult as $slave) {
-            $slaveConnection = new StreamConnection(new ConnectionParameters(array(
-                'host' => $slave[3],
-                'port' => $slave[5]
-            )));
-            
-            $this->add($slaveConnection);
-        }
+        do {
+            $sentinel = $this->getSentinelConnection();
+
+            try {
+                // Querying sentinels for master configuration
+                $masterResult = $sentinel->executeCommand($this->createSentinelCommand(array('get-master-addr-by-name', $this->sentinelMasterName)));
+                $masterConnection = $this->connectionFactory->create(new ConnectionParameters(array(
+                    'host' => $masterResult[0],
+                    'port' => $masterResult[1],
+                    'alias' => 'master'
+                )));
+
+                $this->add($masterConnection);
+
+                // Slave configuration
+                $slavesResult = $sentinel->executeCommand($this->createSentinelCommand(array('slaves', $this->sentinelMasterName)));
+                foreach ($slavesResult as $slave) {
+                    $slaveConnection = $this->connectionFactory->create(new ConnectionParameters(array(
+                        'host' => $slave[3],
+                        'port' => $slave[5]
+                    )));
+
+                    $this->add($slaveConnection);
+                }
+
+                break;
+            } catch (\Predis\Connection\ConnectionException $exception) {
+                $this->discardCurrentSentinel();
+            }
+        } while(true);
     }
 }

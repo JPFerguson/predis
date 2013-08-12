@@ -15,7 +15,7 @@ namespace Predis\Command;
  * @link http://redis.io/topics/sentinel
  * @author Ville Mattila <ville@eventio.fi>
  */
-class Sentinel extends AbstractCommand
+class ServerSentinel extends AbstractCommand
 {
     /**
      * {@inheritdoc}
@@ -24,9 +24,6 @@ class Sentinel extends AbstractCommand
     {
         return 'SENTINEL';
     }
-
-    // FIXME: Unnecessary getHash()
-    public function getHash() { return 'temp-hash'; }
 
     /**
      * {@inheritdoc}

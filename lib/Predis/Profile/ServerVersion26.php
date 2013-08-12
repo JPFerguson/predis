@@ -234,7 +234,7 @@ class ServerVersion26 extends ServerProfile
             'info'                      => 'Predis\Command\ServerInfoV26x',
             'time'                      => 'Predis\Command\ServerTime',
 
-            'sentinel'                  => 'Predis\Command\Sentinel',
+            'sentinel'                  => 'Predis\Command\ServerSentinel',
         );
     }
 }
