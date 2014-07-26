@@ -9,11 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Predis\Connection;
+namespace Predis\Connection\Aggregate;
 
 use Predis\Command\CommandInterface;
 use Predis\Command\ServerSentinel;
 use Predis\Replication\ReplicationStrategy;
+use Predis\Connection\Factory as ConnectionFactory;
+use Predis\Connection\Parameters as ConnectionParameters;
 
 /**
  * @author Ville Mattila <ville@eventio.fi>
@@ -120,23 +122,33 @@ class SentinelBackedReplication extends MasterSlaveReplication
             try {
                 // Querying sentinels for master configuration
                 $masterResult = $sentinel->executeCommand($this->createSentinelCommand(array('get-master-addr-by-name', $this->sentinelMasterName)));
-                $masterConnection = $this->connectionFactory->create(new ConnectionParameters(array(
+                $masterConnectionParams = array(
                     'host' => $masterResult[0],
                     'port' => $masterResult[1],
                     'alias' => 'master'
-                )));
-
-                $this->add($masterConnection);
+                );
+                $this->addConnectionFromParams($masterConnectionParams);
 
                 // Slave configuration
+                $okSlaves = 0;
                 $slavesResult = $sentinel->executeCommand($this->createSentinelCommand(array('slaves', $this->sentinelMasterName)));
                 foreach ($slavesResult as $slave) {
-                    $slaveConnection = $this->connectionFactory->create(new ConnectionParameters(array(
-                        'host' => $slave[3],
-                        'port' => $slave[5]
-                    )));
+                    $slave = $this->convertSlaveResponse($slave);
 
-                    $this->add($slaveConnection);
+                    if ($this->shouldDiscardSlave($slave)) {
+                        continue;
+                    }
+
+                    $this->addConnectionFromParams(array('host' => $slave['ip'], 'port' => $slave['port']));
+
+                    $okSlaves++;
+                }
+                
+                if (!$okSlaves) {
+                    // If there is no connectable slaves, we'll add also master
+                    // as a slave to support read queries.
+                    unset($masterConnectionParams['alias']);
+                    $this->addConnectionFromParams($masterConnectionParams);
                 }
 
                 break;
@@ -144,5 +156,37 @@ class SentinelBackedReplication extends MasterSlaveReplication
                 $this->discardCurrentSentinel();
             }
         } while(true);
+    }
+    
+    private function addConnectionFromParams($params) {
+        $connection = $this->connectionFactory->create(new ConnectionParameters($params));
+
+        $this->add($connection);
+    }
+
+    /**
+     * This is a copy of ServerSentinel::processMastersOrSlaves.
+     * It seems that no Command::parseResponse is used.
+     */
+    private function convertSlaveResponse($node) {
+        $processed = array();
+        $count = count($node);
+
+        for ($i = 0; $i < $count; $i++) {
+            $processed[$node[$i]] = $node[++$i];
+        }
+
+        return $processed;
+    }
+
+    /**
+     * Decides whether this slave should be taken into configuration.
+     */
+    private function shouldDiscardSlave(array $slave) {
+        $flags = explode(',', $slave['flags']);
+        
+        if (array_intersect($flags, array('s_down','disconnected'))) {
+            return true;
+        }
     }
 }
