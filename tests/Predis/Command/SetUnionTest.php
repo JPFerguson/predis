@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-set
  */
-class SetUnionTest extends CommandTestCase
+class SetUnionTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -77,31 +75,6 @@ class SetUnionTest extends CommandTestCase
     }
 
     /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key1', 'key2', 'key3');
-        $expected = array('prefix:key1', 'prefix:key2', 'prefix:key3');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
      * @group connected
      */
     public function testReturnsMembersOnSingleKeyOrNonExistingSetForUnion()
@@ -131,7 +104,7 @@ class SetUnionTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

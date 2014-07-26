@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-list
  */
-class ListSetTest extends CommandTestCase
+class ListSetTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,32 +52,7 @@ class ListSetTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 0, 'value');
-        $expected = array('prefix:key', 0, 'value');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -91,13 +64,13 @@ class ListSetTest extends CommandTestCase
 
         $redis->rpush('letters', 'a', 'b', 'c');
 
-        $this->assertTrue($redis->lset('letters', 1, 'B'));
+        $this->assertEquals('OK', $redis->lset('letters', 1, 'B'));
         $this->assertSame(array('a', 'B', 'c'), $redis->lrange('letters', 0, -1));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR index out of range
      */
     public function testThrowsExceptionOnIndexOutOfRange()
@@ -110,7 +83,7 @@ class ListSetTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

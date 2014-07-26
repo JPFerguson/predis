@@ -11,14 +11,10 @@
 
 namespace Predis\Connection;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
-use Predis\Profile\ServerProfile;
-
 /**
  * @group ext-phpiredis
  */
-class PhpiredisStreamConnectionTest extends ConnectionTestCase
+class PhpiredisStreamConnectionTest extends PredisConnectionTestCase
 {
     /**
      * @group disconnected
@@ -44,7 +40,7 @@ class PhpiredisStreamConnectionTest extends ConnectionTestCase
     /**
      * @group disconnected
      * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Invalid scheme: udp
+     * @expectedExceptionMessage Invalid scheme: 'udp'.
      */
     public function testThrowsExceptionOnInvalidScheme()
     {
@@ -101,7 +97,7 @@ class PhpiredisStreamConnectionTest extends ConnectionTestCase
         $cmdRpush  = $profile->createCommand('rpush', array('metavars', 'foo', 'hoge', 'lol'));
         $cmdLrange = $profile->createCommand('lrange', array('metavars', 0, -1));
 
-        $this->assertSame('PONG', $connection->executeCommand($cmdPing));
+        $this->assertEquals('PONG', $connection->executeCommand($cmdPing));
         $this->assertSame('echoed', $connection->executeCommand($cmdEcho));
         $this->assertNull($connection->executeCommand($cmdGet));
         $this->assertSame(3, $connection->executeCommand($cmdRpush));
@@ -109,6 +105,7 @@ class PhpiredisStreamConnectionTest extends ConnectionTestCase
     }
 
     /**
+     * @medium
      * @group connected
      * @expectedException Predis\Protocol\ProtocolException
      * @expectedExceptionMessage Protocol error, got "P" as reply type byte
@@ -118,7 +115,7 @@ class PhpiredisStreamConnectionTest extends ConnectionTestCase
         $connection = $this->getConnection($profile);
         $socket = $connection->getResource();
 
-        $connection->writeCommand($profile->createCommand('ping'));
+        $connection->writeRequest($profile->createCommand('ping'));
         fread($socket, 1);
 
         $connection->read();
@@ -131,7 +128,7 @@ class PhpiredisStreamConnectionTest extends ConnectionTestCase
     /**
      * {@inheritdoc}
      */
-    protected function getConnection(&$profile = null, $initialize = false, Array $parameters = array())
+    protected function getConnection(&$profile = null, $initialize = false, array $parameters = array())
     {
         $parameters = $this->getParameters($parameters);
         $profile = $this->getProfile();
@@ -139,8 +136,13 @@ class PhpiredisStreamConnectionTest extends ConnectionTestCase
         $connection = new PhpiredisStreamConnection($parameters);
 
         if ($initialize) {
-            $connection->pushInitCommand($profile->createCommand('select', array($parameters->database)));
-            $connection->pushInitCommand($profile->createCommand('flushdb'));
+            $connection->addConnectCommand(
+                $profile->createCommand('select', array($parameters->database))
+            );
+
+            $connection->addConnectCommand(
+                $profile->createCommand('flushdb')
+            );
         }
 
         return $connection;

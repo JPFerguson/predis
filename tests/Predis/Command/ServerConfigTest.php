@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-server
  */
-class ServerConfigTest extends CommandTestCase
+class ServerConfigTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -71,9 +69,7 @@ class ServerConfigTest extends CommandTestCase
      */
     public function testParseResponseOfConfigSet()
     {
-        $command = $this->getCommand();
-
-        $this->assertTrue($command->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -81,9 +77,7 @@ class ServerConfigTest extends CommandTestCase
      */
     public function testParseResponseOfConfigResetstat()
     {
-        $command = $this->getCommand();
-
-        $this->assertTrue($command->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -131,7 +125,7 @@ class ServerConfigTest extends CommandTestCase
 
         $previous = $redis->config('GET', 'loglevel');
 
-        $this->assertTrue($redis->config('SET', 'loglevel', 'notice'));
+        $this->assertEquals('OK', $redis->config('SET', 'loglevel', 'notice'));
         $this->assertSame(array('loglevel' => 'notice'), $redis->config('GET', 'loglevel'));
 
         // We set the loglevel configuration to the previous value.
@@ -140,14 +134,14 @@ class ServerConfigTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR Unsupported CONFIG parameter: foo
      */
     public function testThrowsExceptionWhenSettingUnknownConfiguration()
     {
         $redis = $this->getClient();
 
-        $this->assertFalse($redis->config('SET', 'foo', 'bar'));
+        $redis->config('SET', 'foo', 'bar');
     }
 
     /**
@@ -157,17 +151,17 @@ class ServerConfigTest extends CommandTestCase
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->config('RESETSTAT'));
+        $this->assertEquals('OK', $redis->config('RESETSTAT'));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      */
     public function testThrowsExceptionOnUnknownSubcommand()
     {
         $redis = $this->getClient();
 
-        $this->assertFalse($redis->config('FOO'));
+        $redis->config('FOO');
     }
 }

@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-string
  */
-class StringGetTest extends CommandTestCase
+class StringGetTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -58,38 +56,13 @@ class StringGetTest extends CommandTestCase
     }
 
     /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key');
-        $expected = array('prefix:key');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
      * @group connected
      */
     public function testReturnsStringValue()
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->set('foo', 'bar'));
+        $this->assertEquals('OK', $redis->set('foo', 'bar'));
         $this->assertEquals('bar', $redis->get('foo'));
     }
 
@@ -119,7 +92,7 @@ class StringGetTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-set
  */
-class SetMoveTest extends CommandTestCase
+class SetMoveTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -61,31 +59,6 @@ class SetMoveTest extends CommandTestCase
     }
 
     /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key:source', 'key:destination', 'member');
-        $expected = array('prefix:key:source', 'prefix:key:destination', 'member');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
      * @group connected
      */
     public function testReturnsMemberExistenceInSet()
@@ -103,7 +76,7 @@ class SetMoveTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongTypeOfSourceKey()
@@ -117,7 +90,7 @@ class SetMoveTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongTypeOfDestinationKey()

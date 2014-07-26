@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-connection
  */
-class ConnectionQuitTest extends CommandTestCase
+class ConnectionQuitTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,19 +52,19 @@ class ConnectionQuitTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $command = $this->getCommand();
-
-        $this->assertTrue($command->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
      * @group connected
      */
-    public function testReturnsTrueWhenClosingConnection()
+    public function testReturnsStatusResponseWhenClosingConnection()
     {
         $redis = $this->getClient();
         $command = $this->getCommand();
+        $response = $redis->executeCommand($command);
 
-        $this->assertTrue($redis->executeCommand($command));
+        $this->assertInstanceOf('Predis\Response\Status', $response);
+        $this->assertEquals('OK', $response);
     }
 }

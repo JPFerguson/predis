@@ -11,22 +11,20 @@
 
 namespace Predis\Replication;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
-use Predis\Command\CommandInterface;
-use Predis\Profile\ServerProfile;
+use PredisTestCase;
+use Predis\Profile;
 
 /**
  *
  */
-class ReplicationStrategyTest extends StandardTestCase
+class ReplicationStrategyTest extends PredisTestCase
 {
     /**
      * @group disconnected
      */
     public function testReadCommands()
     {
-        $profile = ServerProfile::getDevelopment();
+        $profile = Profile\Factory::getDevelopment();
         $strategy = new ReplicationStrategy();
 
         foreach ($this->getExpectedCommands('read') as $commandId) {
@@ -38,9 +36,9 @@ class ReplicationStrategyTest extends StandardTestCase
     /**
      * @group disconnected
      */
-    public function testWriteCommands()
+    public function testWriteRequests()
     {
-        $profile = ServerProfile::getDevelopment();
+        $profile = Profile\Factory::getDevelopment();
         $strategy = new ReplicationStrategy();
 
         foreach ($this->getExpectedCommands('write') as $commandId) {
@@ -54,7 +52,7 @@ class ReplicationStrategyTest extends StandardTestCase
      */
     public function testDisallowedCommands()
     {
-        $profile = ServerProfile::getDevelopment();
+        $profile = Profile\Factory::getDevelopment();
         $strategy = new ReplicationStrategy();
 
         foreach ($this->getExpectedCommands('disallowed') as $commandId) {
@@ -68,7 +66,7 @@ class ReplicationStrategyTest extends StandardTestCase
      */
     public function testSortCommand()
     {
-        $profile = ServerProfile::getDevelopment();
+        $profile = Profile\Factory::getDevelopment();
         $strategy = new ReplicationStrategy();
 
         $cmdReadSort = $profile->createCommand('SORT', array('key:list'));
@@ -81,11 +79,11 @@ class ReplicationStrategyTest extends StandardTestCase
     /**
      * @group disconnected
      * @expectedException Predis\NotSupportedException
-     * @expectedExceptionMessage The command INFO is not allowed in replication mode
+     * @expectedExceptionMessage The command 'INFO' is not allowed in replication mode.
      */
     public function testUsingDisallowedCommandThrowsException()
     {
-        $profile = ServerProfile::getDevelopment();
+        $profile = Profile\Factory::getDevelopment();
         $strategy = new ReplicationStrategy();
 
         $command = $profile->createCommand('INFO');
@@ -119,7 +117,6 @@ class ReplicationStrategyTest extends StandardTestCase
                 ->method('getId')
                 ->will($this->returnValue('CMDTEST'));
 
-
         $strategy->setCommandReadOnly('CMDTEST', true);
         $this->assertTrue($strategy->isReadOperation($command));
     }
@@ -136,7 +133,6 @@ class ReplicationStrategyTest extends StandardTestCase
                 ->method('getId')
                 ->will($this->returnValue('CMDTEST'));
 
-
         $strategy->setCommandReadOnly('CMDTEST', false);
         $this->assertFalse($strategy->isReadOperation($command));
 
@@ -150,7 +146,7 @@ class ReplicationStrategyTest extends StandardTestCase
     public function testCanUseCallableToCheckCommand()
     {
         $strategy = new ReplicationStrategy();
-        $profile = ServerProfile::getDevelopment();
+        $profile = Profile\Factory::getDevelopment();
 
         $strategy->setCommandReadOnly('SET', function ($command) {
             return $command->getArgument(1) === true;
@@ -169,7 +165,7 @@ class ReplicationStrategyTest extends StandardTestCase
     public function testSetLuaScriptAsReadOperation()
     {
         $strategy = new ReplicationStrategy();
-        $profile = ServerProfile::getDevelopment();
+        $profile = Profile\Factory::getDevelopment();
 
         $writeScript = 'redis.call("set", "foo", "bar")';
         $readScript = 'return true';
@@ -190,11 +186,11 @@ class ReplicationStrategyTest extends StandardTestCase
     /**
      * @group disconnected
      */
-    public function testSetLuaScriptAsReadOperationWorksWithScriptedCommand()
+    public function testSetLuaScriptAsReadOperationWorksWithScriptCommand()
     {
         $strategy = new ReplicationStrategy();
 
-        $command = $this->getMock('Predis\Command\ScriptedCommand', array('getScript'));
+        $command = $this->getMock('Predis\Command\ScriptCommand', array('getScript'));
         $command->expects($this->any())
                 ->method('getScript')
                 ->will($this->returnValue($script = 'return true'));
@@ -213,11 +209,11 @@ class ReplicationStrategyTest extends StandardTestCase
     /**
      * @group disconnected
      */
-    public function testSetLuaScriptAsReadOperationWorksWithScriptedCommandAndCallableCheck()
+    public function testSetLuaScriptAsReadOperationWorksWithScriptCommandAndCallableCheck()
     {
         $strategy = new ReplicationStrategy();
 
-        $command = $this->getMock('Predis\Command\ScriptedCommand', array('getScript'));
+        $command = $this->getMock('Predis\Command\ScriptCommand', array('getScript'));
         $command->expects($this->any())
                 ->method('getScript')
                 ->will($this->returnValue($script = 'return true'));
@@ -236,14 +232,13 @@ class ReplicationStrategyTest extends StandardTestCase
     /**
      * Returns the list of expected supported commands.
      *
-     * @param string $type Optional type of command (based on its keys)
+     * @param  string $type Optional type of command (based on its keys)
      * @return array
      */
     protected function getExpectedCommands($type = null)
     {
         $commands = array(
             /* commands operating on the connection */
-            'EXISTS'                => 'read',
             'AUTH'                  => 'read',
             'SELECT'                => 'read',
             'ECHO'                  => 'read',
@@ -276,6 +271,7 @@ class ReplicationStrategyTest extends StandardTestCase
             'PTTL'                  => 'write',
             'SORT'                  => 'variable',
             'KEYS'                  => 'read',
+            'SCAN'                  => 'read',
             'RANDOMKEY'             => 'read',
 
             /* commands operating on string values */
@@ -290,6 +286,7 @@ class ReplicationStrategyTest extends StandardTestCase
             'GETSET'                => 'write',
             'INCR'                  => 'write',
             'INCRBY'                => 'write',
+            'INCRBYFLOAT'           => 'write',
             'SETBIT'                => 'write',
             'SETEX'                 => 'write',
             'MSET'                  => 'write',
@@ -321,8 +318,9 @@ class ReplicationStrategyTest extends StandardTestCase
             'SCARD'                 => 'read',
             'SISMEMBER'             => 'read',
             'SMEMBERS'              => 'read',
-            'SPOP'                  => 'write',
+            'SSCAN'                 => 'read',
             'SRANDMEMBER'           => 'read',
+            'SPOP'                  => 'write',
             'SREM'                  => 'write',
             'SINTER'                => 'read',
             'SUNION'                => 'read',
@@ -343,6 +341,10 @@ class ReplicationStrategyTest extends StandardTestCase
             'ZREVRANGEBYSCORE'      => 'read',
             'ZREVRANK'              => 'read',
             'ZSCORE'                => 'read',
+            'ZSCAN'                 => 'read',
+            'ZLEXCOUNT'             => 'read',
+            'ZRANGEBYLEX'           => 'read',
+            'ZREMRANGEBYLEX'        => 'write',
 
             /* commands operating on hashes */
             'HDEL'                  => 'write',
@@ -357,6 +359,12 @@ class ReplicationStrategyTest extends StandardTestCase
             'HSET'                  => 'write',
             'HSETNX'                => 'write',
             'HVALS'                 => 'read',
+            'HSCAN'                 => 'read',
+
+            /* commands operating on HyperLogLog */
+            'PFADD'                 => 'write',
+            'PFMERGE'               => 'write',
+            'PFCOUNT'               => 'read',
 
             /* scripting */
             'EVAL'                  => 'write',

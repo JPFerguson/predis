@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-string
  */
-class StringSetRangeTest extends CommandTestCase
+class StringSetRangeTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -55,31 +53,6 @@ class StringSetRangeTest extends CommandTestCase
     public function testParseResponse()
     {
         $this->assertSame(10, $this->getCommand()->parseResponse(10));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 5, 'range');
-        $expected = array('prefix:key', 5, 'range');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 
     /**
@@ -127,7 +100,7 @@ class StringSetRangeTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR offset is out of range
      */
     public function testThrowsExceptionOnInvalidOffset()
@@ -137,7 +110,7 @@ class StringSetRangeTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

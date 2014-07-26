@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-string
  */
-class StringIncrementByFloatTest extends CommandTestCase
+class StringIncrementByFloatTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -58,31 +56,6 @@ class StringIncrementByFloatTest extends CommandTestCase
     }
 
     /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 5.0);
-        $expected = array('prefix:key', 5.0);
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
      * @group connected
      */
     public function testCreatesNewKeyOnNonExistingKey()
@@ -109,7 +82,7 @@ class StringIncrementByFloatTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR value is not a valid float
      */
     public function testThrowsExceptionOnDecrementValueNotFloat()
@@ -121,7 +94,7 @@ class StringIncrementByFloatTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR value is not a valid float
      */
     public function testThrowsExceptionOnKeyValueNotFloat()
@@ -134,7 +107,7 @@ class StringIncrementByFloatTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

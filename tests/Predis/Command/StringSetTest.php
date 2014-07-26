@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-string
  */
-class StringSetTest extends CommandTestCase
+class StringSetTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,32 +52,7 @@ class StringSetTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 'value');
-        $expected = array('prefix:key', 'value');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -89,8 +62,8 @@ class StringSetTest extends CommandTestCase
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->set('foo', 'bar'));
+        $this->assertEquals('OK', $redis->set('foo', 'bar'));
         $this->assertTrue($redis->exists('foo'));
-        $this->assertEquals('bar', $redis->get('foo'));
+        $this->assertSame('bar', $redis->get('foo'));
     }
 }

@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-string
  */
-class StringBitOpTest extends CommandTestCase
+class StringBitOpTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -77,31 +75,6 @@ class StringBitOpTest extends CommandTestCase
     }
 
     /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('AND', 'key:dst', 'key:01', 'key:02');
-        $expected = array('AND', 'prefix:key:dst', 'prefix:key:01', 'prefix:key:02');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
      * @group connected
      */
     public function testCanPerformBitwiseAND()
@@ -158,7 +131,7 @@ class StringBitOpTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR BITOP NOT must be called with a single source key.
      */
     public function testBitwiseNOTAcceptsOnlyOneSourceKey()
@@ -168,7 +141,7 @@ class StringBitOpTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR syntax error
      */
     public function testThrowsExceptionOnInvalidOperation()
@@ -178,7 +151,7 @@ class StringBitOpTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnInvalidSourceKey()
@@ -199,6 +172,6 @@ class StringBitOpTest extends CommandTestCase
         $redis->lpush('key:dst', 'list');
         $redis->bitop('AND', 'key:dst', 'key:src:1', 'key:src:2');
 
-        $this->assertSame('none', $redis->type('key:dst'));
+        $this->assertEquals('none', $redis->type('key:dst'));
     }
 }

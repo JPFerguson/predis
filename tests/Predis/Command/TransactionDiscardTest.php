@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-transaction
  */
-class TransactionDiscardTest extends CommandTestCase
+class TransactionDiscardTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -51,7 +49,7 @@ class TransactionDiscardTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -63,14 +61,14 @@ class TransactionDiscardTest extends CommandTestCase
 
         $redis->multi();
 
-        $this->assertInstanceOf('Predis\ResponseQueued', $redis->set('foo', 'bar'));
-        $this->assertTrue($redis->discard());
+        $this->assertEquals('QUEUED', $redis->set('foo', 'bar'));
+        $this->assertEquals('OK', $redis->discard());
         $this->assertFalse($redis->exists('foo'));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR DISCARD without MULTI
      */
     public function testThrowsExceptionWhenCallingOutsideTransaction()

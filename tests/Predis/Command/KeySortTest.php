@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-key
  */
-class KeySortTest extends CommandTestCase
+class KeySortTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -38,8 +36,8 @@ class KeySortTest extends CommandTestCase
     /**
      * Utility method to to an LPUSH of some unordered values on a key.
      *
-     * @param Predis\Client $redis Redis client instance.
-     * @param string $key Target key
+     * @param  Predis\Client $redis Redis client instance.
+     * @param  string        $key   Target key
      * @return array
      */
     protected function lpushUnorderedList(Predis\Client $redis, $key)
@@ -101,43 +99,6 @@ class KeySortTest extends CommandTestCase
         $command = $this->getCommand();
 
         $this->assertSame($expected, $command->parseResponse($raw));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $modifiers = array(
-            'by' => 'by_key_*',
-            'limit' => array(1, 4),
-            'get' => array('object_*', '#'),
-            'sort'  => 'asc',
-            'alpha' => true,
-            'store' => 'destination_key',
-        );
-        $arguments = array('key', $modifiers);
-
-        $expected = array(
-            'prefix:key', 'BY', 'prefix:by_key_*', 'GET', 'prefix:object_*', 'GET', '#',
-            'LIMIT', 1, 4, 'ASC', 'ALPHA', 'STORE', 'prefix:destination_key'
-        );
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 
     /**
@@ -268,7 +229,7 @@ class KeySortTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

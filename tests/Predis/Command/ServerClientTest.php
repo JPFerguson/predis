@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-server
  */
-class ServerClientTest extends CommandTestCase
+class ServerClientTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -145,31 +143,29 @@ BUFFER;
 
     /**
      * @group connected
+     * @requiresRedisVersion >= 2.6.9
      */
     public function testGetsNameOfConnection()
     {
-         $this->markTestSkippedOnRedisVersionBelow('2.6.9');
-
          $redis = $this->getClient();
          $clientName = $redis->client('GETNAME');
          $this->assertNull($clientName);
 
          $expectedConnectionName = 'foo-bar';
-         $this->assertTrue($redis->client('SETNAME', $expectedConnectionName));
+         $this->assertEquals('OK', $redis->client('SETNAME', $expectedConnectionName));
          $this->assertEquals($expectedConnectionName, $redis->client('GETNAME'));
     }
 
     /**
      * @group connected
+     * @requiresRedisVersion >= 2.6.9
      */
     public function testSetsNameOfConnection()
     {
-         $this->markTestSkippedOnRedisVersionBelow('2.6.9');
-
          $redis = $this->getClient();
 
          $expectedConnectionName = 'foo-baz';
-         $this->assertTrue($redis->client('SETNAME', $expectedConnectionName));
+         $this->assertEquals('OK', $redis->client('SETNAME', $expectedConnectionName));
          $this->assertEquals($expectedConnectionName, $redis->client('GETNAME'));
     }
 
@@ -187,37 +183,36 @@ BUFFER;
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @requiresRedisVersion >= 2.6.9
      * @dataProvider invalidConnectionNameProvider
+     * @expectedException Predis\Response\ServerException
      */
     public function testInvalidSetNameOfConnection($invalidConnectionName)
     {
-         $this->markTestSkippedOnRedisVersionBelow('2.6.9');
-
          $redis = $this->getClient();
          $redis->client('SETNAME', $invalidConnectionName);
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      */
     public function testThrowsExceptioOnWrongModifier()
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->client('FOO'));
+        $redis->client('FOO');
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR No such client
      */
     public function testThrowsExceptionWhenKillingUnknownClient()
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->client('KILL', '127.0.0.1:65535'));
+        $redis->client('KILL', '127.0.0.1:65535');
     }
 }

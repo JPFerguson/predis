@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-key
  */
-class KeyDumpTest extends CommandTestCase
+class KeyDumpTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -60,30 +58,5 @@ class KeyDumpTest extends CommandTestCase
         $command = $this->getCommand();
 
         $this->assertSame($expected, $command->parseResponse($raw));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key');
-        $expected = array('prefix:key');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 }

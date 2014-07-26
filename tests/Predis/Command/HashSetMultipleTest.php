@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-hash
  */
-class HashSetMultipleTest extends CommandTestCase
+class HashSetMultipleTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -68,32 +66,7 @@ class HashSetMultipleTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 'field1', 'value1', 'field2', 'value2');
-        $expected = array('prefix:key', 'field1', 'value1', 'field2', 'value2');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -103,10 +76,10 @@ class HashSetMultipleTest extends CommandTestCase
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->hmset('metavars', 'foo', 'bar', 'hoge', 'piyo'));
+        $this->assertEquals('OK', $redis->hmset('metavars', 'foo', 'bar', 'hoge', 'piyo'));
         $this->assertSame(array('foo' => 'bar', 'hoge' => 'piyo'), $redis->hgetall('metavars'));
 
-        $this->assertTrue($redis->hmset('metavars', 'foo', 'barbar', 'lol', 'wut'));
+        $this->assertEquals('OK', $redis->hmset('metavars', 'foo', 'barbar', 'lol', 'wut'));
         $this->assertSame(array('foo' => 'barbar', 'hoge' => 'piyo', 'lol' => 'wut'), $redis->hgetall('metavars'));
     }
 
@@ -124,7 +97,7 @@ class HashSetMultipleTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

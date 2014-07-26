@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-pubsub
  */
-class PubSubUnsubscribeByPatternTest extends CommandTestCase
+class PubSubUnsubscribeByPatternTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -74,31 +72,6 @@ class PubSubUnsubscribeByPatternTest extends CommandTestCase
         $command = $this->getCommand();
 
         $this->assertSame($expected, $command->parseResponse($raw));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array(array('channel:foo:*', 'channel:bar:*'));
-        $expected = array('prefix:channel:foo:*', 'prefix:channel:bar:*');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 
     /**

@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-server
  */
-class ServerFlushDatabaseTest extends CommandTestCase
+class ServerFlushDatabaseTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -51,7 +49,7 @@ class ServerFlushDatabaseTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -63,7 +61,7 @@ class ServerFlushDatabaseTest extends CommandTestCase
 
         $redis->set('foo', 'bar');
 
-        $this->assertTrue($redis->flushdb());
+        $this->assertEquals('OK', $redis->flushdb());
         $this->assertFalse($redis->exists('foo'));
     }
 }

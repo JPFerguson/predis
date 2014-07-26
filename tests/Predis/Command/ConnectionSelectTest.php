@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-connection
  */
-class ConnectionSelectTest extends CommandTestCase
+class ConnectionSelectTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,9 +52,7 @@ class ConnectionSelectTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $command = $this->getCommand();
-
-        $this->assertTrue($command->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -68,13 +64,13 @@ class ConnectionSelectTest extends CommandTestCase
 
         $redis->set('foo', 'bar');
 
-        $this->assertTrue($redis->select(REDIS_SERVER_DBNUM - 1));
+        $this->assertEquals('OK', $redis->select(REDIS_SERVER_DBNUM - 1));
         $this->assertFalse($redis->exists('foo'));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR invalid DB index
      */
     public function testThrowsExceptionOnUnexpectedDatabase()

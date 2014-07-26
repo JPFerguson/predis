@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-server
  */
-class ServerObjectTest extends CommandTestCase
+class ServerObjectTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -104,7 +102,7 @@ class ServerObjectTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      */
     public function testThrowsExceptionOnInvalidSubcommand()
     {

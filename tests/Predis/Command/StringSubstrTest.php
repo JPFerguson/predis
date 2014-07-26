@@ -11,8 +11,6 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * SUBSTR is actually the old name of GETRANGE in version of Redis <= 2.0.
  * This command should be considered obsolete and we will perform any kind
@@ -21,7 +19,7 @@ use \PHPUnit_Framework_TestCase as StandardTestCase;
  * @group commands
  * @group realm-string
  */
-class StringSubstrTest extends CommandTestCase
+class StringSubstrTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -59,30 +57,5 @@ class StringSubstrTest extends CommandTestCase
     public function testParseResponse()
     {
         $this->assertSame('substring',$this->getCommand()->parseResponse('substring'));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 5, 10);
-        $expected = array('prefix:key', 5, 10);
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 }

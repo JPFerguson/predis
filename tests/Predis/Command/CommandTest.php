@@ -11,19 +11,19 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
+use PredisTestCase;
 
 /**
  *
  */
-class CommandTest extends StandardTestCase
+class CommandTest extends PredisTestCase
 {
     /**
      * @group disconnected
      */
     public function testImplementsCorrectInterface()
     {
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
+        $command = $this->getMockForAbstractClass('Predis\Command\Command');
 
         $this->assertInstanceOf('Predis\Command\CommandInterface', $command);
     }
@@ -33,7 +33,7 @@ class CommandTest extends StandardTestCase
      */
     public function testGetEmptyArguments()
     {
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
+        $command = $this->getMockForAbstractClass('Predis\Command\Command');
 
         $this->assertEmpty($command->getArguments());
     }
@@ -45,7 +45,7 @@ class CommandTest extends StandardTestCase
     {
         $arguments = array('1st', '2nd', '3rd');
 
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
+        $command = $this->getMockForAbstractClass('Predis\Command\Command');
         $command->setRawArguments($arguments);
 
         $this->assertEquals($arguments, $command->getArguments());
@@ -54,14 +54,15 @@ class CommandTest extends StandardTestCase
     /**
      * @group disconnected
      *
-     * @todo Since AbstractCommand::filterArguments is protected we cannot set an expectation
-     *       for it when AbstractCommand::setArguments() is invoked. I wonder how we can do that.
+     * @todo We cannot set an expectation for Command::filterArguments when we
+     *       invoke Command::setArguments() because it is protected. I wonder
+     *       how we can do that.
      */
     public function testSetArguments()
     {
         $arguments = array('1st', '2nd', '3rd');
 
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
+        $command = $this->getMockForAbstractClass('Predis\Command\Command');
         $command->setArguments($arguments);
 
         $this->assertEquals($arguments, $command->getArguments());
@@ -74,7 +75,7 @@ class CommandTest extends StandardTestCase
     {
         $arguments = array('1st', '2nd', '3rd');
 
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
+        $command = $this->getMockForAbstractClass('Predis\Command\Command');
         $command->setArguments($arguments);
 
         $this->assertEquals($arguments[0], $command->getArgument(0));
@@ -88,7 +89,7 @@ class CommandTest extends StandardTestCase
     public function testParseResponse()
     {
         $response = 'response-buffer';
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
+        $command = $this->getMockForAbstractClass('Predis\Command\Command');
 
         $this->assertEquals($response, $command->parseResponse($response));
     }
@@ -96,49 +97,24 @@ class CommandTest extends StandardTestCase
     /**
      * @group disconnected
      */
-    public function testSetAndGetHash()
+    public function testSetAndGetSlot()
     {
-        $hash = "key-hash";
+        $slot = 1024;
 
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
+        $command = $this->getMockForAbstractClass('Predis\Command\Command');
         $command->setRawArguments(array('key'));
 
-        $this->assertNull($command->getHash());
+        $this->assertNull($command->getSlot());
 
-        $command->setHash($hash);
-        $this->assertSame($hash, $command->getHash());
-    }
+        $command->setSlot($slot);
+        $this->assertSame($slot, $command->getSlot());
 
-    /**
-     * @group disconnected
-     */
-    public function testToString()
-    {
-        $expected = 'SET key value';
-        $arguments = array('key', 'value');
+        $command->setArguments(array('key'));
+        $this->assertNull($command->getSlot());
 
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
-        $command->expects($this->once())->method('getId')->will($this->returnValue('SET'));
-
-        $command->setRawArguments($arguments);
-
-        $this->assertEquals($expected, (string) $command);
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testToStringWithLongArguments()
-    {
-        $expected = 'SET key abcdefghijklmnopqrstuvwxyz012345[...]';
-        $arguments = array('key', 'abcdefghijklmnopqrstuvwxyz0123456789');
-
-        $command = $this->getMockForAbstractClass('Predis\Command\AbstractCommand');
-        $command->expects($this->once())->method('getId')->will($this->returnValue('SET'));
-
-        $command->setRawArguments($arguments);
-
-        $this->assertEquals($expected, (string) $command);
+        $command->setSlot($slot);
+        $command->setRawArguments(array('key'));
+        $this->assertNull($command->getSlot());
     }
 
     /**
@@ -148,14 +124,14 @@ class CommandTest extends StandardTestCase
     {
         $arguments = array('arg1', 'arg2', 'arg3', 'arg4');
 
-        $this->assertSame($arguments, AbstractCommand::normalizeArguments($arguments));
-        $this->assertSame($arguments, AbstractCommand::normalizeArguments(array($arguments)));
+        $this->assertSame($arguments, Command::normalizeArguments($arguments));
+        $this->assertSame($arguments, Command::normalizeArguments(array($arguments)));
 
         $arguments = array(array(), array());
-        $this->assertSame($arguments, AbstractCommand::normalizeArguments($arguments));
+        $this->assertSame($arguments, Command::normalizeArguments($arguments));
 
         $arguments = array(new \stdClass());
-        $this->assertSame($arguments, AbstractCommand::normalizeArguments($arguments));
+        $this->assertSame($arguments, Command::normalizeArguments($arguments));
     }
 
     /**
@@ -165,10 +141,10 @@ class CommandTest extends StandardTestCase
     {
         $arguments = array('key', 'value1', 'value2', 'value3');
 
-        $this->assertSame($arguments, AbstractCommand::normalizeVariadic($arguments));
-        $this->assertSame($arguments, AbstractCommand::normalizeVariadic(array('key', array('value1', 'value2', 'value3'))));
+        $this->assertSame($arguments, Command::normalizeVariadic($arguments));
+        $this->assertSame($arguments, Command::normalizeVariadic(array('key', array('value1', 'value2', 'value3'))));
 
         $arguments = array(new \stdClass());
-        $this->assertSame($arguments, AbstractCommand::normalizeVariadic($arguments));
+        $this->assertSame($arguments, Command::normalizeVariadic($arguments));
     }
 }

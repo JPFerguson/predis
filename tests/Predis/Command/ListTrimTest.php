@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-list
  */
-class ListTrimTest extends CommandTestCase
+class ListTrimTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,32 +52,7 @@ class ListTrimTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 0, 1);
-        $expected = array('prefix:key', 0, 1);
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -91,13 +64,13 @@ class ListTrimTest extends CommandTestCase
 
         $redis->rpush('letters', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l');
 
-        $this->assertTrue($redis->ltrim('letters', 0, 2));
+        $this->assertEquals('OK', $redis->ltrim('letters', 0, 2));
         $this->assertSame(array('a', 'b', 'c'), $redis->lrange('letters', 0, -1));
 
         $redis->flushdb();
         $redis->rpush('letters', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l');
 
-        $this->assertTrue($redis->ltrim('letters', 5, 9));
+        $this->assertEquals('OK', $redis->ltrim('letters', 5, 9));
         $this->assertSame(array('f', 'g', 'h', 'i', 'l'), $redis->lrange('letters', 0, -1));
     }
 
@@ -110,7 +83,7 @@ class ListTrimTest extends CommandTestCase
 
         $redis->rpush('letters', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l');
 
-        $this->assertTrue($redis->ltrim('letters', 0, -6));
+        $this->assertEquals('OK', $redis->ltrim('letters', 0, -6));
         $this->assertSame(array('a', 'b', 'c', 'd', 'e'), $redis->lrange('letters', 0, -1));
     }
 
@@ -123,7 +96,7 @@ class ListTrimTest extends CommandTestCase
 
         $redis->rpush('letters', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l');
 
-        $this->assertTrue($redis->ltrim('letters', -5, -5));
+        $this->assertEquals('OK', $redis->ltrim('letters', -5, -5));
         $this->assertSame(array('f'), $redis->lrange('letters', 0, -1));
     }
 
@@ -136,13 +109,13 @@ class ListTrimTest extends CommandTestCase
 
         $redis->rpush('letters', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l');
 
-        $this->assertTrue($redis->ltrim('letters', -100, 100));
+        $this->assertEquals('OK', $redis->ltrim('letters', -100, 100));
         $this->assertSame(array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l'), $redis->lrange('letters', -100, 100));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

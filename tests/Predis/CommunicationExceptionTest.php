@@ -11,14 +11,12 @@
 
 namespace Predis;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
-use Predis\Connection\SingleConnectionInterface;
+use PredisTestCase;
 
 /**
  *
  */
-class CommunicationExceptionTest extends StandardTestCase
+class CommunicationExceptionTest extends PredisTestCase
 {
     /**
      * @group disconnected
@@ -63,7 +61,7 @@ class CommunicationExceptionTest extends StandardTestCase
      */
     public function testCommunicationExceptionHandling()
     {
-        $connection = $this->getMock('Predis\Connection\SingleConnectionInterface');
+        $connection = $this->getMock('Predis\Connection\NodeConnectionInterface');
         $connection->expects($this->once())->method('isConnected')->will($this->returnValue(true));
         $connection->expects($this->once())->method('disconnect');
 
@@ -79,8 +77,8 @@ class CommunicationExceptionTest extends StandardTestCase
     /**
      * Returns a mocked connection instance.
      *
-     * @param mixed $parameters Connection parameters.
-     * @return SingleConnectionInterface
+     * @param  mixed                              $parameters Connection parameters.
+     * @return Connection\NodeConnectionInterface
      */
     protected function getMockedConnectionBase($parameters = null)
     {
@@ -88,8 +86,8 @@ class CommunicationExceptionTest extends StandardTestCase
 
         if ($parameters === null) {
             $builder->disableOriginalConstructor();
-        } else if (!$parameters instanceof ConnectionParametersInterface) {
-            $parameters = new ConnectionParameters($parameters);
+        } elseif (!$parameters instanceof Connection\ParametersInterface) {
+            $parameters = new Connection\Parameters($parameters);
         }
 
         return $builder->getMockForAbstractClass(array($parameters));
@@ -98,14 +96,18 @@ class CommunicationExceptionTest extends StandardTestCase
     /**
      * Returns a connection exception instance.
      *
-     * @param SingleConnectionInterface $message Connection instance.
-     * @param string $message Exception message.
-     * @param int $code Exception code.
-     * @param \Exception $inner Inner exception.
+     * @param  Connection\NodeConnectionInterface $connection Connection instance.
+     * @param  string                             $message    Exception message.
+     * @param  int                                $code       Exception code.
+     * @param  \Exception                         $inner      Inner exception.
      * @return \Exception
      */
-    protected function getException(SingleConnectionInterface $connection, $message, $code = 0, \Exception $inner = null)
-    {
+    protected function getException(
+        Connection\NodeConnectionInterface $connection,
+        $message,
+        $code = 0,
+        \Exception $inner = null
+    ) {
         $arguments = array($connection, $message, $code, $inner);
         $mock = $this->getMockForAbstractClass('Predis\CommunicationException', $arguments);
 

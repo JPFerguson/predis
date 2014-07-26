@@ -11,14 +11,10 @@
 
 namespace Predis\Connection;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
-use Predis\Profile\ServerProfile;
-
 /**
  *
  */
-class StreamConnectionTest extends ConnectionTestCase
+class StreamConnectionTest extends PredisConnectionTestCase
 {
     /**
      * @group disconnected
@@ -44,7 +40,7 @@ class StreamConnectionTest extends ConnectionTestCase
     /**
      * @group disconnected
      * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Invalid scheme: udp
+     * @expectedExceptionMessage Invalid scheme: 'udp'.
      */
     public function testThrowsExceptionOnInvalidScheme()
     {
@@ -89,29 +85,15 @@ class StreamConnectionTest extends ConnectionTestCase
 
     /**
      * @group connected
-     */
-    public function testReadsMultibulkRepliesAsIterators()
-    {
-        $connection = $this->getConnection($profile, true, array('iterable_multibulk' => true));
-
-        $connection->executeCommand($profile->createCommand('rpush', array('metavars', 'foo', 'hoge', 'lol')));
-        $connection->writeCommand($profile->createCommand('lrange', array('metavars', 0, -1)));
-
-        $this->assertInstanceOf('Predis\Iterator\MultiBulkResponse', $iterator = $connection->read());
-        $this->assertSame(array('foo', 'hoge', 'lol'), iterator_to_array($iterator));
-    }
-
-    /**
-     * @group connected
      * @expectedException Predis\Protocol\ProtocolException
-     * @expectedExceptionMessage Unknown prefix: 'P'
+     * @expectedExceptionMessage Unknown response prefix: 'P'.
      */
     public function testThrowsExceptionOnProtocolDesynchronizationErrors()
     {
         $connection = $this->getConnection($profile);
         $stream = $connection->getResource();
 
-        $connection->writeCommand($profile->createCommand('ping'));
+        $connection->writeRequest($profile->createCommand('ping'));
         fread($stream, 1);
 
         $connection->read();
@@ -124,7 +106,7 @@ class StreamConnectionTest extends ConnectionTestCase
     /**
      * {@inheritdoc}
      */
-    protected function getConnection(&$profile = null, $initialize = false, Array $parameters = array())
+    protected function getConnection(&$profile = null, $initialize = false, array $parameters = array())
     {
         $parameters = $this->getParameters($parameters);
         $profile = $this->getProfile();
@@ -132,8 +114,13 @@ class StreamConnectionTest extends ConnectionTestCase
         $connection = new StreamConnection($parameters);
 
         if ($initialize) {
-            $connection->pushInitCommand($profile->createCommand('select', array($parameters->database)));
-            $connection->pushInitCommand($profile->createCommand('flushdb'));
+            $connection->addConnectCommand(
+                $profile->createCommand('select', array($parameters->database))
+            );
+
+            $connection->addConnectCommand(
+                $profile->createCommand('flushdb')
+            );
         }
 
         return $connection;

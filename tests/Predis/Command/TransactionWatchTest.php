@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-transaction
  */
-class TransactionWatchTest extends CommandTestCase
+class TransactionWatchTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -68,32 +66,7 @@ class TransactionWatchTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key1', 'key2', 'key3');
-        $expected = array('prefix:key1', 'prefix:key2', 'prefix:key3');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -106,10 +79,10 @@ class TransactionWatchTest extends CommandTestCase
 
         $redis1->mset('foo', 'bar', 'hoge', 'piyo');
 
-        $this->assertTrue($redis1->watch('foo', 'hoge'));
-        $this->assertTrue($redis1->multi());
-        $this->assertInstanceOf('Predis\ResponseQueued', $redis1->get('foo'));
-        $this->assertTrue($redis2->set('foo', 'hijacked'));
+        $this->assertEquals('OK', $redis1->watch('foo', 'hoge'));
+        $this->assertEquals('OK', $redis1->multi());
+        $this->assertEquals('QUEUED', $redis1->get('foo'));
+        $this->assertEquals('OK', $redis2->set('foo', 'hijacked'));
         $this->assertNull($redis1->exec());
         $this->assertSame('hijacked', $redis1->get('foo'));
     }
@@ -122,17 +95,17 @@ class TransactionWatchTest extends CommandTestCase
         $redis1 = $this->getClient();
         $redis2 = $this->getClient();
 
-        $this->assertTrue($redis1->watch('foo'));
-        $this->assertTrue($redis1->multi());
-        $this->assertInstanceOf('Predis\ResponseQueued', $redis1->set('foo', 'bar'));
-        $this->assertTrue($redis2->set('foo', 'hijacked'));
+        $this->assertEquals('OK', $redis1->watch('foo'));
+        $this->assertEquals('OK', $redis1->multi());
+        $this->assertEquals('QUEUED', $redis1->set('foo', 'bar'));
+        $this->assertEquals('OK', $redis2->set('foo', 'hijacked'));
         $this->assertNull($redis1->exec());
         $this->assertSame('hijacked', $redis1->get('foo'));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR WATCH inside MULTI is not allowed
      */
     public function testThrowsExceptionWhenCallingInsideTransaction()

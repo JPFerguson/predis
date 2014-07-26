@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-zset
  */
-class ZSetReverseRangeTest extends CommandTestCase
+class ZSetReverseRangeTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -82,36 +80,11 @@ class ZSetReverseRangeTest extends CommandTestCase
     public function testParseResponseWithScores()
     {
         $raw = array('element1', '1', 'element2', '2', 'element3', '3');
-        $expected = array(array('element1', '1'), array('element2', '2'), array('element3', '3'));
+        $expected = array('element1' => '1', 'element2' => '2', 'element3' => '3');
 
         $command = $this->getCommandWithArgumentsArray(array('zset', 0, 1, 'withscores'));
 
         $this->assertSame($expected, $command->parseResponse($raw));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('zset', 0, 100, array('withscores' => true));
-        $expected = array('prefix:zset', 0, 100, 'WITHSCORES');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 
     /**
@@ -161,7 +134,7 @@ class ZSetReverseRangeTest extends CommandTestCase
         $redis = $this->getClient();
 
         $redis->zadd('letters', -10, 'a', 0, 'b', 10, 'c', 20, 'd', 20, 'e', 30, 'f');
-        $expected = array(array('d', '20'), array('c', '10'), array('b', '0'));
+        $expected = array('d' => '20', 'c' => '10', 'b' => '0');
 
         $this->assertSame($expected, $redis->zrevrange('letters', 2, 4, 'withscores'));
         $this->assertSame($expected, $redis->zrevrange('letters', 2, 4, array('withscores' => true)));
@@ -169,7 +142,7 @@ class ZSetReverseRangeTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

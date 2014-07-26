@@ -11,15 +11,13 @@
 
 namespace Predis\PubSub;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
+use PredisTestCase;
 use Predis\Client;
-use Predis\Profile\ServerProfile;
 
 /**
  * @group realm-pubsub
  */
-class DispatcherLoopTest extends StandardTestCase
+class DispatcherLoopTest extends PredisTestCase
 {
     // ******************************************************************** //
     // ---- INTEGRATION TESTS --------------------------------------------- //
@@ -80,7 +78,7 @@ class DispatcherLoopTest extends StandardTestCase
 
         $dispatcher->run();
 
-        $this->assertTrue($consumer->ping());
+        $this->assertEquals('PONG', $consumer->ping());
     }
 
     /**
@@ -122,6 +120,6 @@ class DispatcherLoopTest extends StandardTestCase
 
         $dispatcher->run();
 
-        $this->assertTrue($consumer->ping());
+        $this->assertEquals('PONG', $consumer->ping());
     }
 }

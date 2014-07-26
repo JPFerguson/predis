@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-scripting
  */
-class ServerEvalTest extends CommandTestCase
+class ServerEvalTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -62,33 +60,6 @@ class ServerEvalTest extends CommandTestCase
     /**
      * @group disconnected
      */
-    public function testPrefixKeys()
-    {
-        $lua = 'return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}';
-
-        $arguments = array($lua, 2, 'foo', 'hoge', 'bar', 'piyo');
-        $expected = array($lua, 2, 'prefix:foo', 'prefix:hoge', 'bar', 'piyo');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
     public function testGetScriptHash()
     {
         $command = $this->getCommandWithArgumentsArray(array($lua = 'return true', 0));
@@ -110,7 +81,7 @@ class ServerEvalTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      */
     public function testThrowsExceptionOnWrongNumberOfKeys()
     {
@@ -122,7 +93,7 @@ class ServerEvalTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      */
     public function testThrowsExceptionOnInvalidScript()
     {

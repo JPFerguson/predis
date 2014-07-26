@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-hash
  */
-class HashIncrementByFloatTest extends CommandTestCase
+class HashIncrementByFloatTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -58,31 +56,6 @@ class HashIncrementByFloatTest extends CommandTestCase
     }
 
     /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 'field', 10.5);
-        $expected = array('prefix:key', 'field', 10.5);
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
      * @group connected
      */
     public function testIncrementsValueOfFieldByFloat()
@@ -110,7 +83,7 @@ class HashIncrementByFloatTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR hash value is not a valid float
      */
     public function testThrowsExceptionOnStringField()
@@ -123,7 +96,7 @@ class HashIncrementByFloatTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-key
  */
-class KeyMoveTest extends CommandTestCase
+class KeyMoveTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -61,31 +59,6 @@ class KeyMoveTest extends CommandTestCase
     }
 
     /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 'db');
-        $expected = array('prefix:key', 'db');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
-    }
-
-    /**
      * @group connected
      * @todo This test fails if REDIS_SERVER_DBNUM is 0.
      */
@@ -107,7 +80,7 @@ class KeyMoveTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR index out of range
      */
     public function testThrowsExceptionOnInvalidDatabases()

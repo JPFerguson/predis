@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-list
  */
-class ListPopLastPushHeadTest extends CommandTestCase
+class ListPopLastPushHeadTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -55,31 +53,6 @@ class ListPopLastPushHeadTest extends CommandTestCase
     public function testParseResponse()
     {
         $this->assertSame('element', $this->getCommand()->parseResponse('element'));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key:source', 'key:destination');
-        $expected = array('prefix:key:source', 'prefix:key:destination');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 
     /**
@@ -127,7 +100,7 @@ class ListPopLastPushHeadTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongTypeOfSourceKey()
@@ -140,7 +113,7 @@ class ListPopLastPushHeadTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongTypeOfDestinationKey()

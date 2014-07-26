@@ -11,14 +11,13 @@
 
 namespace Predis\Transaction;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
+use PredisTestCase;
 use Predis\Client;
 
 /**
  *
  */
-class AbortedMultiExecExceptionTest extends StandardTestCase
+class AbortedMultiExecExceptionTest extends PredisTestCase
 {
     /**
      * @group disconnected
@@ -26,7 +25,7 @@ class AbortedMultiExecExceptionTest extends StandardTestCase
     public function testExceptionClass()
     {
         $client = new Client();
-        $transaction = new MultiExecContext($client);
+        $transaction = new MultiExec($client);
         $exception = new AbortedMultiExecException($transaction, 'ABORTED');
 
         $this->assertInstanceOf('Predis\PredisException', $exception);

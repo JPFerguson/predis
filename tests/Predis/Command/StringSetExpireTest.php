@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-string
  */
-class StringSetExpireTest extends CommandTestCase
+class StringSetExpireTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,32 +52,7 @@ class StringSetExpireTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 10, 'hello');
-        $expected = array('prefix:key', 10, 'hello');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -89,7 +62,7 @@ class StringSetExpireTest extends CommandTestCase
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->setex('foo', 10, 'bar'));
+        $this->assertEquals('OK', $redis->setex('foo', 10, 'bar'));
         $this->assertTrue($redis->exists('foo'));
         $this->assertEquals(10, $redis->ttl('foo'));
     }
@@ -110,7 +83,7 @@ class StringSetExpireTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR value is not an integer or out of range
      */
     public function testThrowsExceptionOnNonIntegerTTL()
@@ -120,7 +93,7 @@ class StringSetExpireTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR invalid expire time in SETEX
      */
     public function testThrowsExceptionOnZeroTTL()
@@ -130,7 +103,7 @@ class StringSetExpireTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR invalid expire time in SETEX
      */
     public function testThrowsExceptionOnNegativeTTL()

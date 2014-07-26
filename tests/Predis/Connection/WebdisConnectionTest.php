@@ -11,9 +11,8 @@
 
 namespace Predis\Connection;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
-use Predis\Profile\ServerProfile;
+use PredisTestCase;
+use Predis\Profile;
 
 /**
  * @group ext-curl
@@ -21,7 +20,7 @@ use Predis\Profile\ServerProfile;
  * @group realm-connection
  * @group realm-webdis
  */
-class WebdisConnectionTest extends StandardTestCase
+class WebdisConnectionTest extends PredisTestCase
 {
     /**
      * @group disconnected
@@ -36,12 +35,12 @@ class WebdisConnectionTest extends StandardTestCase
     /**
      * @group disconnected
      * @expectedException Predis\NotSupportedException
-     * @expectedExceptionMessage The method Predis\Connection\WebdisConnection::writeCommand() is not supported
+     * @expectedExceptionMessage The method Predis\Connection\WebdisConnection::writeRequest() is not supported.
      */
     public function testWritingCommandsIsNotSupported()
     {
         $connection = new WebdisConnection($this->getParameters());
-        $connection->writeCommand($this->getProfile()->createCommand('ping'));
+        $connection->writeRequest($this->getProfile()->createCommand('ping'));
     }
 
     /**
@@ -58,7 +57,7 @@ class WebdisConnectionTest extends StandardTestCase
     /**
      * @group disconnected
      * @expectedException Predis\NotSupportedException
-     * @expectedExceptionMessage The method Predis\Connection\WebdisConnection::read() is not supported
+     * @expectedExceptionMessage The method Predis\Connection\WebdisConnection::read() is not supported.
      */
     public function testReadingFromConnectionIsNotSupported()
     {
@@ -69,18 +68,19 @@ class WebdisConnectionTest extends StandardTestCase
     /**
      * @group disconnected
      * @expectedException Predis\NotSupportedException
-     * @expectedExceptionMessage The method Predis\Connection\WebdisConnection::pushInitCommand() is not supported
+     * @expectedExceptionMessage The method Predis\Connection\WebdisConnection::addConnectCommand() is not supported.
+     *
      */
-    public function testPushingInitCommandsIsNotSupported()
+    public function testAddingConnectCommandsIsNotSupported()
     {
         $connection = new WebdisConnection($this->getParameters());
-        $connection->pushInitCommand($this->getProfile()->createCommand('ping'));
+        $connection->addConnectCommand($this->getProfile()->createCommand('ping'));
     }
 
     /**
      * @group disconnected
      * @expectedException Predis\NotSupportedException
-     * @expectedExceptionMessage Disabled command: SELECT
+     * @expectedExceptionMessage Command 'SELECT' is not allowed by Webdis.
      */
     public function testRejectCommandSelect()
     {
@@ -91,7 +91,7 @@ class WebdisConnectionTest extends StandardTestCase
     /**
      * @group disconnected
      * @expectedException Predis\NotSupportedException
-     * @expectedExceptionMessage Disabled command: AUTH
+     * @expectedExceptionMessage Command 'AUTH' is not allowed by Webdis.
      */
     public function testRejectCommandAuth()
     {
@@ -130,7 +130,7 @@ class WebdisConnectionTest extends StandardTestCase
         $cmdRpush  = $profile->createCommand('rpush', array('metavars', 'foo', 'hoge', 'lol'));
         $cmdLrange = $profile->createCommand('lrange', array('metavars', 0, -1));
 
-        $this->assertSame('PONG', $connection->executeCommand($cmdPing));
+        $this->assertEquals('PONG', $connection->executeCommand($cmdPing));
         $this->assertSame('echoed', $connection->executeCommand($cmdEcho));
         $this->assertNull($connection->executeCommand($cmdGet));
         $this->assertSame(3, $connection->executeCommand($cmdRpush));
@@ -138,6 +138,7 @@ class WebdisConnectionTest extends StandardTestCase
     }
 
     /**
+     * @medium
      * @group disconnected
      * @group slow
      * @expectedException Predis\Connection\ConnectionException
@@ -156,7 +157,7 @@ class WebdisConnectionTest extends StandardTestCase
     /**
      * Returns a named array with the default connection parameters and their values.
      *
-     * @return Array Default connection parameters.
+     * @return array Default connection parameters.
      */
     protected function getDefaultParametersArray()
     {
@@ -168,37 +169,13 @@ class WebdisConnectionTest extends StandardTestCase
     }
 
     /**
-     * Returns a new instance of connection parameters.
-     *
-     * @param array $additional Additional connection parameters.
-     * @return ConnectionParameters Default connection parameters.
-     */
-    protected function getParameters($additional = array())
-    {
-        $parameters = array_merge($this->getDefaultParametersArray(), $additional);
-        $parameters = new ConnectionParameters($parameters);
-
-        return $parameters;
-    }
-
-    /**
-     * Returns a new instance of server profile.
-     *
-     * @param array $additional Additional connection parameters.
-     * @return ServerProfile
-     */
-    protected function getProfile($version = null)
-    {
-        return ServerProfile::get($version ?: REDIS_SERVER_VERSION);
-    }
-
-    /**
      * Returns a new instance of a connection instance.
      *
-     * @param array $parameters Additional connection parameters.
+     * @param  mixed            $profile    Redis profile.
+     * @param  array            $parameters Additional connection parameters.
      * @return WebdisConnection
      */
-    protected function getConnection(&$profile = null, Array $parameters = array())
+    protected function getConnection(&$profile = null, array $parameters = array())
     {
         $parameters = $this->getParameters($parameters);
         $profile = $this->getProfile();

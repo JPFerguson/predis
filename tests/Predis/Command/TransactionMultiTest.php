@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-transaction
  */
-class TransactionMultiTest extends CommandTestCase
+class TransactionMultiTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -51,7 +49,7 @@ class TransactionMultiTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -61,26 +59,26 @@ class TransactionMultiTest extends CommandTestCase
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->multi());
-        $this->assertSame('QUEUED', (string) $redis->echo('tx1'));
-        $this->assertSame('QUEUED', (string) $redis->echo('tx2'));
+        $this->assertEquals('OK', $redis->multi());
+        $this->assertEquals('QUEUED', $redis->echo('tx1'));
+        $this->assertEquals('QUEUED', $redis->echo('tx2'));
     }
 
     /**
      * @group connected
      */
-    public function testActuallyReturnsReplyObjectAbstraction()
+    public function testActuallyReturnsResponseObjectAbstraction()
     {
         $redis = $this->getClient();
 
-        $this->assertTrue($redis->multi());
-        $this->assertInstanceOf('Predis\ResponseObjectInterface', $redis->echo('tx1'));
-        $this->assertInstanceOf('Predis\ResponseQueued', $redis->echo('tx2'));
+        $this->assertInstanceOf('Predis\Response\Status', $redis->multi());
+        $this->assertInstanceOf('Predis\Response\Status', $redis->echo('tx1'));
+        $this->assertInstanceOf('Predis\Response\Status', $redis->echo('tx2'));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR MULTI calls can not be nested
      */
     public function testThrowsExceptionWhenCallingMultiInsideTransaction()

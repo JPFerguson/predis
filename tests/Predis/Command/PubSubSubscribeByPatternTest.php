@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-pubsub
  */
-class PubSubSubscribeByPatternTest extends CommandTestCase
+class PubSubSubscribeByPatternTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -74,31 +72,6 @@ class PubSubSubscribeByPatternTest extends CommandTestCase
         $command = $this->getCommand();
 
         $this->assertSame($expected, $command->parseResponse($raw));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('channel:foo:*', 'channel:hoge:*');
-        $expected = array('prefix:channel:foo:*', 'prefix:channel:hoge:*');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 
     /**
@@ -166,12 +139,12 @@ class PubSubSubscribeByPatternTest extends CommandTestCase
         $quit = $this->getProfile()->createCommand('quit');
 
         $this->assertSame(array('subscribe', 'channel1', 1), $redis->subscribe('channel1'));
-        $this->assertTrue($redis->executeCommand($quit));
+        $this->assertEquals('OK', $redis->executeCommand($quit));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR only (P)SUBSCRIBE / (P)UNSUBSCRIBE / QUIT allowed in this context
      */
     public function testCannotSendOtherCommandsAfterPsubscribe()

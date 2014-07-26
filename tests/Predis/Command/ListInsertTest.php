@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-list
  */
-class ListInsertTest extends CommandTestCase
+class ListInsertTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -55,31 +53,6 @@ class ListInsertTest extends CommandTestCase
     public function testParseResponse()
     {
         $this->assertSame(1, $this->getCommand()->parseResponse(1));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 'before', 'value1', 'value2');
-        $expected = array('prefix:key', 'before', 'value1', 'value2');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
     }
 
     /**
@@ -121,7 +94,7 @@ class ListInsertTest extends CommandTestCase
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage Operation against a key holding the wrong kind of value
      */
     public function testThrowsExceptionOnWrongType()

@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-transaction
  */
-class TransactionExecTest extends CommandTestCase
+class TransactionExecTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -62,7 +60,7 @@ class TransactionExecTest extends CommandTestCase
     /**
      * @group connected
      */
-    public function testExecutesTransactionAndReturnsArrayOfReplies()
+    public function testExecutesTransactionAndReturnsArrayOfResponses()
     {
         $redis = $this->getClient();
 
@@ -88,7 +86,7 @@ class TransactionExecTest extends CommandTestCase
     /**
      * @group connected
      */
-    public function testRepliesOfTransactionsAreNotParsed()
+    public function testResponsesOfTransactionsAreNotParsed()
     {
         $redis = $this->getClient();
 
@@ -97,12 +95,12 @@ class TransactionExecTest extends CommandTestCase
         $redis->set('foo', 'bar');
         $redis->exists('foo');
 
-        $this->assertSame(array('PONG', true, 1), $redis->exec());
+        $this->assertEquals(array('PONG', 'OK', 1), $redis->exec());
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR EXEC without MULTI
      */
     public function testThrowsExceptionWhenCallingOutsideTransaction()

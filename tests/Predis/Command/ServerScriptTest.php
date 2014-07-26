@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-scripting
  */
-class ServerScriptTest extends CommandTestCase
+class ServerScriptTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,14 +52,14 @@ class ServerScriptTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
      * @group connected
      * @todo We should probably convert integers to booleans.
      */
-    public function testExistsReturnAnArrayOfValues()
+    public function testExistsReturnsAnArrayOfValues()
     {
         $redis = $this->getClient();
 
@@ -93,13 +91,13 @@ class ServerScriptTest extends CommandTestCase
 
         $sha1 = $redis->script('LOAD', 'return true');
 
-        $this->assertTrue($redis->script('FLUSH'));
+        $this->assertEquals('OK', $redis->script('FLUSH'));
         $this->assertSame(array(0), $redis->script('EXISTS', $sha1));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      */
     public function testThrowsExceptionOnInvalidSubcommand()
     {

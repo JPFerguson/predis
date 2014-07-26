@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-key
  */
-class KeyRenameTest extends CommandTestCase
+class KeyRenameTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -54,32 +52,7 @@ class KeyRenameTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeys()
-    {
-        $arguments = array('key', 'newkey');
-        $expected = array('prefix:key', 'prefix:newkey');
-
-        $command = $this->getCommandWithArgumentsArray($arguments);
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame($expected, $command->getArguments());
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testPrefixKeysIgnoredOnEmptyArguments()
-    {
-        $command = $this->getCommand();
-        $command->prefixKeys('prefix:');
-
-        $this->assertSame(array(), $command->getArguments());
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -91,14 +64,14 @@ class KeyRenameTest extends CommandTestCase
 
         $redis->set('foo', 'bar');
 
-        $this->assertTrue($redis->rename('foo', 'foofoo'));
+        $this->assertEquals('OK', $redis->rename('foo', 'foofoo'));
         $this->assertFalse($redis->exists('foo'));
         $this->assertTrue($redis->exists('foofoo'));
     }
 
     /**
      * @group connected
-     * @expectedException Predis\ServerException
+     * @expectedException Predis\Response\ServerException
      * @expectedExceptionMessage ERR no such key
      */
     public function testThrowsExceptionOnNonExistingKeys()

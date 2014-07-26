@@ -11,13 +11,11 @@
 
 namespace Predis\Command;
 
-use \PHPUnit_Framework_TestCase as StandardTestCase;
-
 /**
  * @group commands
  * @group realm-transaction
  */
-class TransactionUnwatchTest extends CommandTestCase
+class TransactionUnwatchTest extends PredisCommandTestCase
 {
     /**
      * {@inheritdoc}
@@ -51,7 +49,7 @@ class TransactionUnwatchTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $this->assertTrue($this->getCommand()->parseResponse(true));
+        $this->assertSame('OK', $this->getCommand()->parseResponse('OK'));
     }
 
     /**
@@ -64,7 +62,7 @@ class TransactionUnwatchTest extends CommandTestCase
 
         $redis1->set('foo', 'bar');
         $redis1->watch('foo');
-        $this->assertTrue($redis1->unwatch());
+        $this->assertEquals('OK', $redis1->unwatch());
         $redis1->multi();
         $redis1->get('foo');
 
@@ -81,6 +79,6 @@ class TransactionUnwatchTest extends CommandTestCase
         $redis = $this->getClient();
 
         $redis->multi();
-        $this->assertInstanceOf('Predis\ResponseQueued', $redis->unwatch());
+        $this->assertInstanceOf('Predis\Response\Status', $redis->unwatch());
     }
 }
