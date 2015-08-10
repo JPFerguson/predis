@@ -48,18 +48,20 @@ class SentinelBackedReplication extends MasterSlaveReplication
      * @param array               $sentinelConnections Sentinel connections definition
      * @param string              $masterName          Sentinel master name
      * @param ReplicationStrategy $strategy            ReplicationStrategy passed to MasterSlaveReplication
+     * @param array               $options             connection options usually passed to Predis/Client
      */
-    public function __construct(array $sentinelConnections, $masterName, ReplicationStrategy $strategy = null)
+    public function __construct(array $sentinelConnections, $masterName, ReplicationStrategy $strategy = null, $options=null)
     {
         parent::__construct($strategy);
 
         $this->sentinelConnections = $sentinelConnections;
         $this->sentinelMasterName = $masterName;
         $this->connectionFactory = new ConnectionFactory();
+        $this->connectionOptions = ($options) ? $options : array();
     }
 
     /**
-     * 
+     *
      */
     protected function check()
     {
@@ -92,7 +94,7 @@ class SentinelBackedReplication extends MasterSlaveReplication
 
         return $this->currentSentinelConnection;
     }
-    
+
     /**
      * Discards the current sentinel connection
      */
@@ -101,7 +103,7 @@ class SentinelBackedReplication extends MasterSlaveReplication
         trigger_error('Sentinel connection ' . $this->currentSentinelConnection . ' failed, discarding.');
         $this->currentSentinelConnection = null;
     }
-    
+
     /**
      * Creates a new ServerSentinel instance with given arguments.
      */
@@ -112,7 +114,7 @@ class SentinelBackedReplication extends MasterSlaveReplication
     }
 
     /**
-     * This function makes a query to the configured sentinels. The query loops through 
+     * This function makes a query to the configured sentinels. The query loops through
      */
     protected function querySentinels()
     {
@@ -122,11 +124,12 @@ class SentinelBackedReplication extends MasterSlaveReplication
             try {
                 // Querying sentinels for master configuration
                 $masterResult = $sentinel->executeCommand($this->createSentinelCommand(array('get-master-addr-by-name', $this->sentinelMasterName)));
-                $masterConnectionParams = array(
-                    'host' => $masterResult[0],
-                    'port' => $masterResult[1],
-                    'alias' => 'master'
-                );
+
+                $masterConnectionParams = $this->connectionOptions;
+                $masterConnectionParams['host'] =  $masterResult[0];
+                $masterConnectionParams['port'] =  $masterResult[1];
+                $masterConnectionParams['alias'] =  'master';
+
                 $this->addConnectionFromParams($masterConnectionParams);
 
                 // Slave configuration
@@ -139,11 +142,15 @@ class SentinelBackedReplication extends MasterSlaveReplication
                         continue;
                     }
 
-                    $this->addConnectionFromParams(array('host' => $slave['ip'], 'port' => $slave['port']));
+                    $slaveConnectionParams = $this->connectionOptions;
+                    $slaveConnectionParams['host'] =  $slave['ip'];
+                    $slaveConnectionParams['port'] =  $slave['port'];
+
+                    $this->addConnectionFromParams($slaveConnectionParams);
 
                     $okSlaves++;
                 }
-                
+
                 if (!$okSlaves) {
                     // If there is no connectable slaves, we'll add also master
                     // as a slave to support read queries.
@@ -157,7 +164,7 @@ class SentinelBackedReplication extends MasterSlaveReplication
             }
         } while(true);
     }
-    
+
     private function addConnectionFromParams($params) {
         $connection = $this->connectionFactory->create(new ConnectionParameters($params));
 
@@ -184,7 +191,7 @@ class SentinelBackedReplication extends MasterSlaveReplication
      */
     private function shouldDiscardSlave(array $slave) {
         $flags = explode(',', $slave['flags']);
-        
+
         if (array_intersect($flags, array('s_down','disconnected'))) {
             return true;
         }
